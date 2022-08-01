@@ -66,20 +66,20 @@ export async function createAnIssue (tools: Toolkit) {
   tools.log.debug('Templates compiled', templated)
 
   if (updateExisting !== null) {
-    const issue_number = tools.inputs.issue_number;
+    const issue_number = Number(tools.inputs.issue_number);
     let existingIssue;
-    if(issue_number) {
+    if(!isNaN(issue_number)) {
       const existingIssues = await tools.github.search.issuesAndPullRequests({
-        q: `${searchExistingQuery}is:issue repo:${process.env.GITHUB_REPOSITORY} in:title ${templated.title}`
+        q: `is:issue repo:${process.env.GITHUB_REPOSITORY} issue: ${issue_number}`
       })
-      const existingIssue = existingIssues.data.items.find(issue => issue.title === templated.title)
+      existingIssue = existingIssues.data.items.find(issue => issue.number === issue_number)
     } else {
       tools.log.info(`Fetching ${searchExistingType} issues with title "${templated.title}"`)
       const searchExistingQuery = (searchExistingType === 'all') ? '' : `is:${searchExistingType} `
       const existingIssues = await tools.github.search.issuesAndPullRequests({
         q: `${searchExistingQuery}is:issue repo:${process.env.GITHUB_REPOSITORY} in:title ${templated.title}`
       })
-      const existingIssue = existingIssues.data.items.find(issue => issue.title === templated.title)
+      existingIssue = existingIssues.data.items.find(issue => issue.title === templated.title)
     }
     if (existingIssue) {
       if (updateExisting === false) {
@@ -91,7 +91,8 @@ export async function createAnIssue (tools: Toolkit) {
           const issue = await tools.github.issues.update({
             ...tools.context.repo,
             issue_number: existingIssue.number,
-            body: templated.body
+            body: templated.body,
+            labels: templated.labels,
           })
           setOutputs(tools, existingIssue, 'updated')
           tools.exit.success(`Updated issue ${existingIssue.title}#${existingIssue.number}: ${existingIssue.html_url}`)
