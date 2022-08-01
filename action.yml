@@ -24,6 +24,9 @@ inputs:
     description: Existing types of issues to search for (comma-separated).
     required: false
     default: open
+  issue_number:
+    description: Update the issue specified by this issue number
+    required: false
 outputs:
   number:
     description: Number of the issue that was created.

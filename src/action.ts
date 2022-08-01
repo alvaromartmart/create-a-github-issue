@@ -66,12 +66,21 @@ export async function createAnIssue (tools: Toolkit) {
   tools.log.debug('Templates compiled', templated)
 
   if (updateExisting !== null) {
-    tools.log.info(`Fetching ${searchExistingType} issues with title "${templated.title}"`)
-    const searchExistingQuery = (searchExistingType === 'all') ? '' : `is:${searchExistingType} `
-    const existingIssues = await tools.github.search.issuesAndPullRequests({
-      q: `${searchExistingQuery}is:issue repo:${process.env.GITHUB_REPOSITORY} in:title ${templated.title}`
-    })
-    const existingIssue = existingIssues.data.items.find(issue => issue.title === templated.title)
+    const issue_number = tools.inputs.issue_number;
+    let existingIssue;
+    if(issue_number) {
+      const existingIssues = await tools.github.search.issuesAndPullRequests({
+        q: `${searchExistingQuery}is:issue repo:${process.env.GITHUB_REPOSITORY} in:title ${templated.title}`
+      })
+      const existingIssue = existingIssues.data.items.find(issue => issue.title === templated.title)
+    } else {
+      tools.log.info(`Fetching ${searchExistingType} issues with title "${templated.title}"`)
+      const searchExistingQuery = (searchExistingType === 'all') ? '' : `is:${searchExistingType} `
+      const existingIssues = await tools.github.search.issuesAndPullRequests({
+        q: `${searchExistingQuery}is:issue repo:${process.env.GITHUB_REPOSITORY} in:title ${templated.title}`
+      })
+      const existingIssue = existingIssues.data.items.find(issue => issue.title === templated.title)
+    }
     if (existingIssue) {
       if (updateExisting === false) {
         setOutputs(tools, existingIssue, 'found')
